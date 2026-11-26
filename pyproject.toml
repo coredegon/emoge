@@ -1,7 +1,7 @@
 [project]
 name = "emoge"
-version = "0.1.1"
-description = "Research packages: fuzzy color models, and more to come."
+version = "0.2.0"
+description = "Research packages: fuzzy sets, color models, and more."
 readme = "README.md"
 license = "0BSD"
 license-files = ["LICENSE"]

@@ -7,7 +7,8 @@ emotions they evoke.
 
 | Package | What it is for | Guide |
 |---|---|---|
-| `emoge.fuzzy_color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/fuzzy_color](https://github.com/coredegon/emoge/tree/main/docs/fuzzy_color) |
+| `emoge.fuzzy` | Fuzzy logic on any axis: fuzzy sets, the words of a channel, and the ways to join their degrees | [docs/fuzzy](https://github.com/coredegon/emoge/tree/main/docs/fuzzy) |
+| `emoge.color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/color](https://github.com/coredegon/emoge/tree/main/docs/color) |
 
 ## Disclaimer
 
