@@ -91,6 +91,25 @@ def test_a_palette_is_the_mean_degree_of_the_pixels():
         MODEL.palette(np.zeros((4, 4)))
 
 
+def test_weights_give_the_palette_of_a_region():
+    degrees = MODEL.degrees(IMAGE)
+    left = np.zeros((30, 40), dtype=bool)
+    left[:, :20] = True
+    soft = np.random.default_rng(2).random((30, 40))
+    assert MODEL.palette(IMAGE, left) == pytest.approx(degrees[..., :20].mean((1, 2)))
+    both = MODEL.palette(IMAGE, np.stack([left, soft]))
+    assert both.shape == (2, 8)
+    assert both[1] == pytest.approx((degrees * soft).sum((1, 2)) / soft.sum())
+    large = np.random.default_rng(3).integers(0, 256, (300, 300, 3), dtype=np.uint8)
+    mask = np.random.default_rng(4).random((300, 300))
+    expected = (MODEL.degrees(large) * mask).sum((1, 2)) / mask.sum()
+    assert MODEL.palette(large, mask) == pytest.approx(expected)
+    with pytest.raises(ValueError, match="shape of the pixels"):
+        MODEL.palette(IMAGE, soft[:10])
+    with pytest.raises(ValueError, match="above 0"):
+        MODEL.palette(IMAGE, np.zeros((30, 40)))
+
+
 def test_prototypes_are_typical_colors():
     typical = dict(zip(MODEL.colors, MODEL.prototypes().tolist(), strict=True))
     assert typical["dark"] == pytest.approx([0, 0, 0], abs=1e-3)

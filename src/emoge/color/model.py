@@ -125,19 +125,39 @@ class ColorModel:
         index = self.classify(rgb)
         return self._colors_then_empty[index.reshape(-1)].reshape(index.shape)
 
-    def palette(self, image: ArrayLike) -> NDArray[np.float64]:
-        """Return the mean degree of every color over the pixels of an image."""
+    def palette(
+        self, image: ArrayLike, weights: ArrayLike | None = None
+    ) -> NDArray[np.float64]:
+        """Return the mean degree of every color over the pixels of an image.
+
+        `weights`, one for every pixel, weigh the mean, as a soft mask of a
+        region does. Masks stacked along a first axis give a palette each,
+        `(len(masks), len(colors))`, from degrees worked out once.
+        """
         pixels = np.asarray(image)
-        pixels = pixels.reshape(
-            -1, *pixels.shape[-1:]
-        )  # `degrees` checks the last axis
+        pixel_shape = pixels.shape[:-1]
+        pixels = pixels.reshape(-1, *pixels.shape[-1:])  # `degrees` checks it
         if not len(pixels):
             raise ValueError("an image without pixels has no palette")
-        totals = np.zeros(len(self.colors))
+        masks = np.ones(pixel_shape)
+        if weights is not None:
+            masks = np.asarray(weights, dtype=np.float64)
+        stacked = masks.shape != pixel_shape
+        if stacked and masks.shape[1:] != pixel_shape:
+            raise ValueError(
+                f"weights need the shape of the pixels, {pixel_shape}, "
+                f"or a stack of it; got {masks.shape}"
+            )
+        masks = masks.reshape(-1, len(pixels))
+        mass = masks.sum(axis=1)
+        if (masks < 0).any() or not (mass > 0).all():
+            raise ValueError("weights are at least 0, and above 0 somewhere in a mask")
+        totals = np.zeros((len(masks), len(self.colors)))
         for start in range(0, len(pixels), _PIXELS_PER_BLOCK):
-            block = pixels[start : start + _PIXELS_PER_BLOCK]
-            totals += self.degrees(block).sum(axis=1)
-        return totals / len(pixels)
+            block = slice(start, start + _PIXELS_PER_BLOCK)
+            totals += masks[:, block] @ self.degrees(pixels[block]).T
+        palettes = totals / mass[:, None]
+        return palettes if stacked else palettes[0]
 
     def prototypes(self) -> NDArray[np.float64]:
         """Return a typical RGB color for every color: shape `(len(colors), 3)`.
