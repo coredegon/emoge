@@ -111,6 +111,7 @@ source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
+    { name = "pillow" },
 ]
 
 [package.optional-dependencies]
@@ -130,6 +131,7 @@ dev = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "numpy", specifier = ">=2.0" },
+    { name = "pillow", specifier = ">=10.1" },
     { name = "torch", marker = "extra == 'torch'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
 ]
 provides-extras = ["torch"]
