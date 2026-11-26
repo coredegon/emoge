@@ -11,11 +11,12 @@ except ImportError:
     raise ImportError("emoge.nn needs PyTorch: pip install emoge[torch]") from None
 
 from emoge.nn.colors import FuzzyColors
-from emoge.nn.graphs import GraphLayer, batch, color_graph, readout
+from emoge.nn.graphs import GraphEncoder, GraphLayer, batch, color_graph, readout
 from emoge.nn.pooling import cooccurrence, palette
 
 __all__ = [
     "FuzzyColors",
+    "GraphEncoder",
     "GraphLayer",
     "batch",
     "color_graph",

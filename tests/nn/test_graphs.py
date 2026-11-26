@@ -4,8 +4,8 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from emoge.color import COLIBRI, HSI  # noqa: E402
-from emoge.graphs import Graph, color_graph  # noqa: E402
-from emoge.nn import FuzzyColors, GraphLayer, batch, readout  # noqa: E402
+from emoge.graphs import Graph, color_graph, load, save  # noqa: E402
+from emoge.nn import FuzzyColors, GraphEncoder, GraphLayer, batch, readout  # noqa: E402
 from emoge.nn import color_graph as tensor_color_graph  # noqa: E402
 
 IMAGES = np.random.default_rng(0).integers(0, 256, (2, 12, 16, 3), dtype=np.uint8)
@@ -20,7 +20,11 @@ def graph(size, value):
     edges = np.zeros((size, size, 1))
     edges[0, 1] = edges[1, 0] = 1.0
     return Graph(
-        np.full((size, 2), value), edges, tuple("abcd"[:size]), ("p", "q"), ("e",)
+        np.full((size, 2), value),
+        edges,
+        tuple(map(str, range(size))),
+        ("p", "q"),
+        ("e",),
     )
 
 
@@ -63,3 +67,67 @@ def test_the_colors_learn_through_the_graph():
     readout(layer(nodes, edges)).sum().backward()
     grads = [p.grad for p in colors.parameters()]
     assert sum(float(g.abs().sum()) for g in grads if g is not None) > 0
+
+
+def ring(size, seed=0, copies=1):
+    """`copies` rings of `size` nodes each, the same random nodes in every ring."""
+    rng = np.random.default_rng(seed)
+    nodes = np.tile(rng.random((size, 2)), (copies, 1))
+    edges = np.zeros((size * copies, size * copies, 3))
+    for start in range(0, size * copies, size):
+        for i in range(size):
+            j = start + (i + 1) % size
+            edges[start + i, j] = edges[j, start + i] = [0.5, 0.2, 1.0]
+    names = tuple(map(str, range(size * copies)))
+    return Graph(nodes, edges, names, ("p", "q"), ("e", "f", "g"))
+
+
+def test_pairs_give_their_labels_too():
+    nodes, _, mask, labels = batch([(graph(2, 1.0), 0), (graph(4, 2.0), 1)])
+    assert nodes.shape == (2, 4, 2)
+    assert mask.tolist() == [[True, True, False, False], [True] * 4]
+    assert labels.tolist() == [0, 1]
+    scores = batch(
+        [(graph(2, 1.0), np.array([0.1, 0.9])), (graph(3, 1.0), np.zeros(2))]
+    )
+    assert scores[3].shape == (2, 2)
+
+
+def test_a_loader_of_saved_graphs(tmp_path):
+    save([ring(3), ring(5, seed=1), ring(4, seed=2)], tmp_path)
+    pairs = torch.utils.data.StackDataset(load(tmp_path), [2, 0, 1])
+    loader = torch.utils.data.DataLoader(pairs, batch_size=2, collate_fn=batch)
+    nodes, edges, mask, labels = next(iter(loader))
+    assert nodes.shape == (2, 5, 2)
+    assert edges.shape == (2, 5, 5, 3)
+    assert mask.sum(dim=1).tolist() == [3, 5]
+    assert labels.tolist() == [2, 0]
+
+
+def test_the_encoder_gives_one_vector_a_graph_whatever_its_size():
+    encoder = GraphEncoder(2, 3, width=8, depth=2)
+    assert encoder.out_features == 16
+    alone = encoder(*batch([ring(4)]))
+    assert alone.shape == (1, 16)
+    together = encoder(*batch([ring(4), ring(9, seed=1)]))  # filled up to 9 nodes
+    assert torch.allclose(alone[0], together[0], atol=1e-6)
+    twice = encoder(*batch([ring(4, copies=2)]))  # the same graph twice over
+    assert torch.allclose(alone, twice, atol=1e-6)
+
+
+def test_the_encoder_learns_to_tell_graphs_apart():
+    pairs = [(ring(size, seed=size), size % 2) for size in range(3, 11)]
+    nodes, edges, mask, labels = batch(pairs)
+    encoder = GraphEncoder(2, 3, width=16, depth=2)
+    head = torch.nn.Linear(encoder.out_features, 2)
+    optimizer = torch.optim.Adam([*encoder.parameters(), *head.parameters()], lr=0.01)
+    losses = []
+    for _ in range(30):
+        loss = torch.nn.functional.cross_entropy(
+            head(encoder(nodes, edges, mask)), labels
+        )
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        losses.append(loss.item())
+    assert losses[-1] < losses[0] / 2

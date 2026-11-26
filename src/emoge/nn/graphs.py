@@ -8,24 +8,50 @@ true for the nodes that are there.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any, cast, overload
 
 import torch
+from torch.utils.data import default_collate
 
 from emoge.graphs.graph import Graph
 from emoge.nn.pooling import cooccurrence, palette
 
 
-def batch(graphs: Sequence[Graph]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+@overload
+def batch(
+    items: Sequence[Graph],
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]: ...
+@overload
+def batch(
+    items: Sequence[tuple[Graph, Any]],
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any]: ...
+def batch(
+    items: Sequence[Graph] | Sequence[tuple[Graph, Any]],
+) -> tuple[Any, ...]:
     """Return graphs as tensors, filled with 0 up to the most nodes among them.
 
     ```python
     nodes, edges, mask = batch([region_graph(...), ...])
+    nodes, edges, mask, labels = batch([(graph, label), ...])
     ```
 
-    The graphs share their features, as graphs made the same way do.
+    The graphs share their features, as graphs made the same way do. Pairs of
+    a graph and its label, as `torch.utils.data.StackDataset(graphs, labels)`
+    gives them, give the labels too, stacked as a `DataLoader` stacks them: so
+    `batch` is the `collate_fn` of a loader of graphs.
     """
-    if not graphs:
+    if not items:
         raise ValueError("a batch needs graphs")
+    if isinstance(items[0], Graph):
+        return _tensors(cast("Sequence[Graph]", items))
+    graphs, labels = zip(*items, strict=True)
+    return *_tensors(graphs), default_collate(list(labels))
+
+
+def _tensors(
+    graphs: Sequence[Graph],
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """The nodes, edges and mask of graphs, filled with 0 up to the largest."""
     first = graphs[0]
     if any(
         (g.node_features, g.edge_features) != (first.node_features, first.edge_features)
@@ -103,3 +129,45 @@ def readout(nodes: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tens
         return nodes.mean(dim=-2)
     kept = mask[..., None].to(nodes.dtype)
     return (nodes * kept).sum(dim=-2) / kept.sum(dim=-2).clamp(min=1)
+
+
+class GraphEncoder(torch.nn.Module):
+    """Graphs of any size, one vector each: `(..., 2 * width)`.
+
+    ```python
+    encoder = GraphEncoder(node_features, edge_features)
+    vectors = encoder(nodes, edges, mask)  # (graphs, encoder.out_features)
+    ```
+
+    A layer takes every node to `width` features, `depth` rounds of
+    `GraphLayer` follow, each added to what was there, and the vector of a
+    graph is the mean and the largest of every feature over its nodes. Messages
+    are means over the neighbours, so a graph of 20 nodes and one of 500 give
+    vectors alike in scale, and the nodes filling a batch change nothing.
+    """
+
+    def __init__(
+        self, node_features: int, edge_features: int, width: int = 64, depth: int = 3
+    ) -> None:
+        super().__init__()
+        self.first = torch.nn.Linear(node_features, width)
+        self._norms = [torch.nn.LayerNorm(width) for _ in range(depth)]
+        self._layers = [GraphLayer(width, edge_features, width) for _ in range(depth)]
+        self.norms = torch.nn.ModuleList(self._norms)  # hold their parameters
+        self.layers = torch.nn.ModuleList(self._layers)
+        self.out_features = 2 * width
+
+    def forward(
+        self,
+        nodes: torch.Tensor,
+        edges: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Return a vector of every graph: `(..., out_features)`."""
+        state = torch.relu(self.first(nodes))
+        if mask is not None:
+            state = state * mask[..., None]
+        for norm, layer in zip(self._norms, self._layers, strict=True):
+            state = state + layer(norm(state), edges, mask)
+        largest = state.amax(dim=-2)  # states are never below 0, nor the filling
+        return torch.cat([readout(state, mask), largest], dim=-1)

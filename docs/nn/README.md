@@ -82,10 +82,53 @@ logits = emotions(nn.readout(graph_layer(nodes, edges)))
 print(tuple(logits.shape))  # (2, 8)
 ```
 
-Graphs made by [`emoge.graphs`](../graphs/README.md), as of regions, become
-tensors with `batch(graphs)`: `nodes`, `edges`, and a `mask` of the nodes that
-are there, the smaller graphs filled with 0. `GraphLayer` and `readout` take
-the mask.
+## Training on graphs
+
+Graphs made by [`emoge.graphs`](../graphs/README.md) differ in size: a graph of
+regions has as many nodes as its image has regions. `batch(graphs)` makes
+tensors of them: `nodes`, `edges`, and a `mask` of the nodes that are there, the
+smaller graphs filled with 0. Given pairs of a graph and its label, it gives the
+labels too, so it is the `collate_fn` of a loader of saved graphs:
+
+```python
+from emoge import graphs, regions
+
+cells = regions.grid((8, 8), 2, 2)
+made = [graphs.region_graph(color.COLIBRI, image, cells) for image in images]
+graphs.save(made, "graphs")  # once, for the whole dataset
+
+pairs = torch.utils.data.StackDataset(graphs.load("graphs"), [0, 1])  # and labels
+loader = torch.utils.data.DataLoader(pairs, 2, shuffle=True, collate_fn=nn.batch)
+```
+
+`GraphEncoder` makes one vector of every graph, whatever its size: a layer
+takes every node to `width` features, `depth` rounds of `GraphLayer` follow,
+and the vector is the mean and the largest of every feature over the nodes.
+
+```python
+encoder = nn.GraphEncoder(len(made[0].node_features), len(made[0].edge_features))
+emotions = torch.nn.Linear(encoder.out_features, 8)
+optimizer = torch.optim.Adam([*encoder.parameters(), *emotions.parameters()])
+
+for nodes, edges, mask, labels in loader:
+    vectors = encoder(nodes, edges, mask)  # (2, encoder.out_features)
+    loss = torch.nn.functional.cross_entropy(emotions(vectors), labels)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+```
+
+How graphs of every size go together:
+
+- The mask keeps the filling from sending messages and from the readout, so a
+  graph gives the same vector in any batch.
+- A node takes the mean of what its neighbours send, not the sum, so nodes of
+  3 neighbours and of 30 stay alike in scale; so does the readout, a mean and a
+  maximum, for graphs of 20 nodes and of 500.
+- Graphs are kept sparse and read one at a time; only a batch is dense, a few
+  MB for 32 graphs of a hundred nodes. `sizes` of saved graphs lets a batch
+  gather graphs of a size, to fill less. Graphs of thousands of nodes are for
+  PyTorch Geometric, which takes `Graph.sparse()`.
 
 ## Back to a color model
 
