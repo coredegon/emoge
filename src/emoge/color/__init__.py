@@ -4,10 +4,12 @@
 from emoge import color
 ```
 
-Color spaces, color models such as COLIBRI, and plots of them. The fuzzy logic
-the models are made of (sets, channels, partitions and norms) is `emoge.fuzzy`.
+Color spaces, color models such as COLIBRI, how far apart colors are, and plots.
+The fuzzy logic the models are made of (sets, channels, partitions and norms) is
+`emoge.fuzzy`.
 """
 
+from emoge.color.difference import difference
 from emoge.color.lut import lookup_table
 from emoge.color.model import ColorModel
 from emoge.color.models import COLIBRI
@@ -24,6 +26,7 @@ __all__ = [
     "RGB",
     "ColorModel",
     "Space",
+    "difference",
     "lookup_table",
     "plot_palette",
     "plot_swatches",

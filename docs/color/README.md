@@ -31,7 +31,7 @@ for i in np.argsort(-degrees)[:2]:
 | `degrees(rgb)` | the degree of every pixel in every color |
 | `label(rgb)`, `classify(rgb)` | the strongest color: its name, or its index in `colors` |
 | `strongest(rgb)` | the index of the strongest color and its degree |
-| `palette(image, weights)` | how much of the image each color takes; with `weights`, a mask or a stack of them, of each region |
+| `palette(image, weights)` | how much of the image each color takes; with `weights`, a mask or a stack of masks, how much of each region |
 | `prototypes()` | a typical RGB color for every color, as below |
 
 ![The 86 colors of COLIBRI](img/colibri_swatches.png)
@@ -97,6 +97,39 @@ HSI is not.
 
 `Space(name, channels, from_rgb, to_rgb)` adds one of your own, with channels
 made by `fuzzy.Channel`.
+
+## How far apart colors are
+
+`difference(a, b, space=OKLCH)` tells how far apart colors are on every channel
+of a space, Oklch unless you give another. Hues go the shorter way round, so
+they differ by 180 at most.
+
+```python
+red, blue, orange = [255, 0, 0], [0, 0, 255], [255, 128, 0]
+gaps = color.difference(red, [blue, orange])  # lightness, chroma, hue
+print(gaps.round(2).tolist())  # [[0.18, 0.06, 125.18], [0.1, 0.07, 23.75]]
+```
+
+A relation of colors is words on such a difference, made with `fuzzy.partition`:
+
+```python
+harmony = fuzzy.partition(
+    fuzzy.Channel("hue difference", 0, 180),
+    {"same": 0, "analogous": 30, "triadic": 120, "complementary": 180},
+)
+print(harmony.degrees(gaps[:, 2]).round(2).tolist())
+# [[0.0, 0.21], [0.0, 0.79], [0.91, 0.0], [0.09, 0.0]]
+```
+
+Red and blue are mostly triadic, red and orange mostly analogous. Hue tells
+little about colors near gray, so weigh it by their chroma.
+
+To relate all the colors of a model at once, give it their prototypes: with
+`p = model.prototypes()`, `difference(p[:, None], p[None])` has the shape
+`(colors, colors, 3)`.
+
+In Oklab, the length of a difference is how different two colors look:
+`np.linalg.norm(difference(a, b, OKLAB), axis=-1)`.
 
 ## Plots
 
