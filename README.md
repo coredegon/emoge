@@ -9,6 +9,7 @@ emotions they evoke.
 |---|---|---|
 | `emoge.fuzzy` | Fuzzy logic on any axis: fuzzy sets, the words of a channel, and the ways to join their degrees | [docs/fuzzy](https://github.com/coredegon/emoge/tree/main/docs/fuzzy) |
 | `emoge.color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/color](https://github.com/coredegon/emoge/tree/main/docs/color) |
+| `emoge.regions` | Regions of an image as masks, crisp or soft: grids, superpixels, label maps; where regions are and how they border | [docs/regions](https://github.com/coredegon/emoge/tree/main/docs/regions) |
 | `emoge.data` | Datasets of images in one format: a folder per class, a table, or rows from anywhere; features of a whole dataset | [docs/data](https://github.com/coredegon/emoge/tree/main/docs/data) |
 | `emoge.nn` | Color models that learn, as PyTorch layers; `pip install emoge[torch]` | [docs/nn](https://github.com/coredegon/emoge/tree/main/docs/nn) |
 
