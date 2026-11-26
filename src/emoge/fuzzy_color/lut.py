@@ -72,8 +72,9 @@ def _build(model: ColorModel, entry: np.dtype) -> Entries:
         pixels = np.stack([np.full_like(green, red), green, blue], axis=-1)
         table[red] = _entries(model, pixels, entry)
 
-    # NumPy lets go of the GIL while it computes, so threads share the levels.
-    with ThreadPoolExecutor() as pool:
+    # NumPy lets go of the GIL while it computes, so threads share the levels;
+    # past 4 of them memory, not the cores, holds the work back.
+    with ThreadPoolExecutor(min(4, os.cpu_count() or 1)) as pool:
         list(pool.map(fill, range(256)))  # list() lets an error out
     return table
 
