@@ -174,6 +174,22 @@ Together these describe the colors of an image as a graph: `palette` weighs the
 colors, `cooccurrence` tells which of them meet, and the `difference` of their
 prototypes how they relate.
 
+## What if the colors were others
+
+`recolor(image, space, variable, source, target)` makes what is `source` in an
+image `target`. Every pixel moves along the channel of the variable, as far as
+it is `source`: a red pixel turns green, a half red one moves half the way, a
+blue one stays.
+
+```python
+greener = color.recolor(flag, color.HSI, hue, "red", "green")
+print(toy.label(greener[0]).tolist())
+# ['green/vivid', 'green/vivid', 'green/vivid', 'blue/vivid', 'blue/vivid', 'blue/vivid']
+```
+
+`weights=`, a mask, keeps the change to a region. Fed to a model of emotions, a
+recolored image tells whether a color makes the difference.
+
 ## Plots
 
 `plot_terms(model)`, `plot_swatches(model)` and `plot_palette(model, weights)`;
