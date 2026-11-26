@@ -74,6 +74,22 @@ print(parts.edges[0, 1, 2:].round(2).tolist())  # [0.0, 0.0, 0.98, 0.02]
 
 The red cell and the blue one beside it are triadic.
 
+## Saving
+
+The graphs of a dataset are made once and kept. `save(graphs, folder)` writes
+them one after another, from a list or as [`data.each`](../data/README.md) makes
+them, so they never are all in memory at once; `load(folder)` gives them back as
+a sequence that reads a graph only when it is asked for. Numbers are kept in
+float32, and of the edges only those there are. `sizes` is how many nodes every
+graph has. The graphs of a folder share their features, and their names too, or
+are numbered from 0, as graphs of regions are.
+
+```python
+graphs.save([parts, parts], "graphs")
+saved = graphs.load("graphs")
+print(len(saved), saved.sizes, saved[1])  # 2 [4 4] Graph(4 nodes, 4 edges)
+```
+
 ## Plots
 
 `plot_graph(graph)` draws a graph. A graph of regions stands where its regions
