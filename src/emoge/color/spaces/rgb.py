@@ -30,6 +30,25 @@ def to_float_rgb(rgb: ArrayLike) -> NDArray[np.float64]:
     return pixels / 255.0
 
 
+def to_linear(rgb: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Return sRGB components as linear light, which adds up as light does.
+
+    A component outside [0, 1] keeps its sign, as colors outside RGB need.
+    """
+    size = np.abs(rgb)
+    linear = np.where(size <= 0.04045, size / 12.92, ((size + 0.055) / 1.055) ** 2.4)
+    return np.sign(rgb) * linear
+
+
+def from_linear(linear: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Return linear light as sRGB components: the inverse of `to_linear`."""
+    size = np.abs(linear)
+    encoded = np.where(
+        size <= 0.0031308, 12.92 * size, 1.055 * size ** (1 / 2.4) - 0.055
+    )
+    return np.sign(linear) * encoded
+
+
 def fit_into_rgb(rgb: NDArray[np.float64]) -> NDArray[np.float64]:
     """Darken colors too bright for RGB until they fit, and clip negatives to 0.
 

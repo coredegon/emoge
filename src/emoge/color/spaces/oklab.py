@@ -12,6 +12,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from emoge.color.space import Space
+from emoge.color.spaces.rgb import from_linear, to_linear
 from emoge.fuzzy.channels import Channel
 
 # Linear RGB to the responses of the three kinds of cones, and their cube roots
@@ -36,8 +37,7 @@ _FROM_OKLAB = np.linalg.inv(_TO_OKLAB)
 
 def rgb_to_oklab(rgb: NDArray[np.float64]) -> NDArray[np.float64]:
     """Convert RGB in [0, 1] to lightness in [0, 1] and the axes `a` and `b`."""
-    linear = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
-    return np.cbrt(linear @ _TO_CONES.T) @ _TO_OKLAB.T
+    return np.cbrt(to_linear(rgb) @ _TO_CONES.T) @ _TO_OKLAB.T
 
 
 def oklab_to_rgb(oklab: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -46,12 +46,7 @@ def oklab_to_rgb(oklab: NDArray[np.float64]) -> NDArray[np.float64]:
     Not every combination is a color: those outside RGB give components below
     0 or above 1.
     """
-    linear = (oklab @ _FROM_OKLAB.T) ** 3 @ _FROM_CONES.T
-    size = np.abs(linear)
-    encoded = np.where(
-        size <= 0.0031308, 12.92 * size, 1.055 * size ** (1 / 2.4) - 0.055
-    )
-    return np.sign(linear) * encoded
+    return from_linear((oklab @ _FROM_OKLAB.T) ** 3 @ _FROM_CONES.T)
 
 
 OKLAB = Space(

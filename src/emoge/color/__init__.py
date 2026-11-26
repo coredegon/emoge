@@ -17,15 +17,19 @@ from emoge.color.models import COLIBRI
 from emoge.color.plots import plot_palette, plot_swatches, plot_terms
 from emoge.color.recolor import recolor
 from emoge.color.space import Space
-from emoge.color.spaces import HSI, HSV, OKLAB, OKLCH, RGB
+from emoge.color.spaces import CIELAB, CIELCH, HSI, HSL, HSV, OKLAB, OKLCH, RGB, XYZ
 
 __all__ = [
+    "CIELAB",
+    "CIELCH",
     "COLIBRI",
     "HSI",
+    "HSL",
     "HSV",
     "OKLAB",
     "OKLCH",
     "RGB",
+    "XYZ",
     "ColorModel",
     "Space",
     "difference",

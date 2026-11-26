@@ -104,15 +104,21 @@ those below.
 
 | Space | Channels |
 |---|---|
+| `RGB` | `red`, `green`, `blue` 0–1 |
 | `HSI` | `hue` 0–360 around, `saturation`, `intensity` 0–1 |
 | `HSV` | `hue` 0–360 around, `saturation`, `value` 0–1 |
+| `HSL` | `hue` 0–360 around, `saturation`, `lightness` 0–1 |
 | `OKLAB` | `lightness` 0–1, `a` and `b` −0.4–0.4 |
 | `OKLCH` | `lightness` 0–1, `chroma` 0–0.4, `hue` 0–360 around |
-| `RGB` | `red`, `green`, `blue` 0–1 |
+| `CIELAB` | `lightness` 0–100, `a` and `b` −128–128 |
+| `CIELCH` | `lightness` 0–100, `chroma` 0–150, `hue` 0–360 around |
+| `XYZ` | `x`, `y`, `z` 0 to the white of sRGB |
 
 Oklab and Oklch see colors as people do: equal distances look about equally
 different, and lightness is the lightness people see, which the intensity of
-HSI is not.
+HSI is not. CIELAB and CIELCh are the classic spaces of the same kind, in which
+much of the research on color and emotion is written; XYZ, the light the eye
+takes in, underlies them.
 
 `Space(name, channels, from_rgb, to_rgb)` adds one of your own, with channels
 made by `fuzzy.Channel`.
