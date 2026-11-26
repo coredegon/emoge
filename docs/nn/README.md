@@ -64,6 +64,29 @@ print(tuple(nn.palette(degrees).shape), tuple(nn.cooccurrence(degrees).shape))
 # (2, 86) (2, 86, 86)
 ```
 
+## Graphs
+
+`color_graph(degrees)` makes the color graph of degree maps: a node for every
+color, how much of the image it takes and how often it lies beside itself, and
+an edge for how often two colors are neighbours. `GraphLayer` passes messages
+along the edges, every one weighed by a gate its features open, and `readout`
+takes the mean of the nodes, one vector a graph. From pixels to emotions, the
+colors learn with everything after them:
+
+```python
+graph_layer = nn.GraphLayer(2, 1, 16)
+emotions = torch.nn.Linear(16, 8)
+
+nodes, edges = nn.color_graph(layer(values))
+logits = emotions(nn.readout(graph_layer(nodes, edges)))
+print(tuple(logits.shape))  # (2, 8)
+```
+
+Graphs made by [`emoge.graphs`](../graphs/README.md), as of regions, become
+tensors with `batch(graphs)`: `nodes`, `edges`, and a `mask` of the nodes that
+are there, the smaller graphs filled with 0. `GraphLayer` and `readout` take
+the mask.
+
 ## Back to a color model
 
 `to_model()` gives the model with its cores as learned, for everything
