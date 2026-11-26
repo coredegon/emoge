@@ -11,6 +11,11 @@ from emoge.nn import color_graph as tensor_color_graph  # noqa: E402
 IMAGES = np.random.default_rng(0).integers(0, 256, (2, 12, 16, 3), dtype=np.uint8)
 
 
+@pytest.fixture(autouse=True)
+def _seed():
+    torch.manual_seed(0)  # a layer starts at random; the same start every run
+
+
 def graph(size, value):
     edges = np.zeros((size, size, 1))
     edges[0, 1] = edges[1, 0] = 1.0
