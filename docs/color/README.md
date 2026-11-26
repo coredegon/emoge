@@ -86,6 +86,20 @@ print(toy.label([0, 0, 255]))  # blue/vivid
 Gray has no hue, so its family leaves hue out. `and_norm=` joins the degrees of
 the words in another way than the product: any t-norm of `fuzzy.norms`.
 
+## Keeping a model
+
+`save(model, path)` writes a model to a JSON file and `load(path)` reads it
+back. The file holds the cores of the partitions, each written as `partition`
+takes it, like `"red": [350, 10]`, so it can be read and compared.
+
+```python
+color.save(toy, "toy.json")
+print(color.load("toy.json").colors == toy.colors)  # True
+```
+
+A model is saved when its words come from `partition` and its space is one of
+those below.
+
 ## Color spaces
 
 | Space | Channels |

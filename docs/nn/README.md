@@ -59,9 +59,10 @@ print(tuple(nn.palette(degrees).shape), tuple(nn.cooccurrence(degrees).shape))
 ## Back to a color model
 
 `to_model()` gives the model with its cores as learned, for everything
-`emoge.color` does with a model: palettes, plots, lookup tables.
+`emoge.color` does with a model: palettes, plots, lookup tables, and files.
 
 ```python
 learned = layer.to_model()
 print(learned.label([255, 0, 0]))  # red/high/dark
+color.save(learned, "learned.json")  # to keep it
 ```
