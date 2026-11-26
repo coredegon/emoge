@@ -6,7 +6,7 @@ from emoge import data
 """
 
 from emoge.data.dataset import Dataset, load_image
-from emoge.data.features import features
+from emoge.data.features import each, features
 from emoge.data.sources import folders, table
 
-__all__ = ["Dataset", "features", "folders", "load_image", "table"]
+__all__ = ["Dataset", "each", "features", "folders", "load_image", "table"]

@@ -65,5 +65,16 @@ palettes = data.features(images, color.COLIBRI.palette)
 print(palettes.shape, images.labels.tolist())  # (3, 86) [0, 0, 1]
 ```
 
+`each(dataset, function)` gives the same results one by one, in order, for
+results too large to keep all at once, such as graphs:
+
+```python
+for palette in data.each(images, color.COLIBRI.palette):
+    print(palette.shape)
+# (86,)
+# (86,)
+# (86,)
+```
+
 A dataset is a sequence of samples, so `torch.utils.data.DataLoader(images,
 batch_size=32)` takes it as it is.
