@@ -1,0 +1,15 @@
+# emoge
+
+emoge is a package for research purposes: the analysis of images and the
+emotions they evoke.
+
+## Documentation
+
+| Package | What it is for | Guide |
+|---|---|---|
+| `emoge.fuzzy_color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/fuzzy_color](docs/fuzzy_color/guide.md) |
+
+## Disclaimer
+
+Not everything may be implemented yet. Missing parts can be added on your own,
+or suggested in an issue or a pull request.

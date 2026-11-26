@@ -1,0 +1,61 @@
+[project]
+name = "emoge"
+version = "0.1.0"
+description = "Research packages: fuzzy color models, and more to come."
+readme = "README.md"
+license = "0BSD"
+license-files = ["LICENSE"]
+authors = [
+    { name = "coredegon", email = "valikalik15@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.9",
+    "numpy>=2.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+    "ty>=0.0.104",
+]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # import order
+    "N",       # naming
+    "D",       # docstrings
+    "UP",      # modern syntax
+    "B",       # likely bugs
+    "C4",      # comprehensions
+    "SIM",     # simplifications
+    "PT",      # pytest style
+    "NPY",     # numpy
+    "PERF",    # performance
+    "RUF",     # ruff's own
+]
+ignore = [
+    "D105",  # operators are documented by their class
+    "D107",  # and so is __init__
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+"docs/**" = ["D"]
+
+[tool.pytest]
+minversion = "9.0"
+strict = true
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]  # test files in different folders may share a name
+filterwarnings = ["error::RuntimeWarning"]  # a leaked overflow or 0/0 is a bug
