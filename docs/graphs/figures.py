@@ -6,19 +6,20 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib import cbook
 
 from emoge import color, data, graphs, regions
 
 IMAGES = Path(__file__).parent / "img"
+PHOTO = Path(__file__).parent.parent / "coffee.jpg"  # Rachel Michetti, CC0
 
 
 def two_graphs():
     """One photo, two graphs: of its regions over it, of its colors round a circle."""
-    path = cbook.get_sample_data("grace_hopper.jpg", asfileobj=False)
-    photo = data.load_image(path, 256)
-    pieces = regions.superpixels(photo, 120)
-    figure, axes = plt.subplots(1, 2, figsize=(10, 4.8), layout="constrained")
+    photo = data.load_image(PHOTO)
+    pieces = regions.superpixels(photo, 150)
+    figure, axes = plt.subplots(
+        1, 2, figsize=(10, 4), layout="constrained", width_ratios=[3, 2]
+    )
     graphs.plot_graph(
         graphs.region_graph(color.COLIBRI, photo, pieces), axes[0], image=photo
     )
