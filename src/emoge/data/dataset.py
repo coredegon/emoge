@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 class Dataset:
@@ -87,10 +87,14 @@ class Dataset:
 def load_image(
     path: str | os.PathLike[str], size: int | None = None
 ) -> NDArray[np.uint8]:
-    """Load an image as RGB bytes, `(height, width, 3)`, made `size` x `size`."""
+    """Load an image as RGB bytes, `(height, width, 3)`, made `size` x `size`.
+
+    A photo stands as its camera says, turned by the orientation in its EXIF.
+    """
     with Image.open(path) as opened:
         if size is not None:
             opened.draft("RGB", (size, size))  # a JPEG decodes smaller, faster
+        ImageOps.exif_transpose(opened, in_place=True)  # stands as people see it
         picture = opened.convert("RGB")
     if size is not None:
         scale = size / min(picture.size)

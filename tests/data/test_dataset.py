@@ -67,3 +67,16 @@ def test_a_dataloader_takes_a_dataset_as_it_is(photos):
     batch = next(iter(torch.utils.data.DataLoader(images, batch_size=3)))
     assert batch["image"].shape == (3, 16, 16, 3)
     assert batch["label"].tolist() == [1, 0, 1]
+
+
+def test_a_photo_stands_as_its_camera_says(tmp_path):
+    taken = np.zeros((20, 40, 3), dtype=np.uint8)
+    taken[:, :20] = 255  # white on the left as stored
+    exif = Image.Exif()
+    exif[0x0112] = 6  # the camera was turned: show it turned a quarter clockwise
+    Image.fromarray(taken).save(tmp_path / "turned.jpg", exif=exif, quality=95)
+    image = load_image(tmp_path / "turned.jpg")
+    assert image.shape == (40, 20, 3)
+    assert image[:20].mean() > 200  # white now on top
+    assert image[20:].mean() < 50
+    assert load_image(tmp_path / "turned.jpg", size=10).shape == (10, 10, 3)

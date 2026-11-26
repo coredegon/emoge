@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import os
 from pathlib import Path
@@ -55,9 +56,9 @@ def table(
     `root`, the folder of the table unless given.
     """
     path = Path(path)
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")  # without the mark Excel may add
     if path.suffix == ".csv":
-        rows = list(csv.DictReader(text.splitlines()))
+        rows = list(csv.DictReader(io.StringIO(text, newline="")))
     elif path.suffix == ".json":
         rows = json.loads(text)
     elif path.suffix == ".jsonl":

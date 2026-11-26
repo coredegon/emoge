@@ -51,3 +51,12 @@ def test_json_tables(photos):
     (photos / "train.txt").write_text("")
     with pytest.raises(ValueError, match="csv"):
         table(photos / "train.txt")
+
+
+def test_a_csv_table_from_a_spreadsheet(photos):
+    # Excel starts a file with a byte order mark; a quoted value may hold lines.
+    text = '\ufeffimage,caption\nimg/a.png,"a red\nsquare"\nimg/b.png,another\n'
+    (photos / "notes.csv").write_bytes(text.encode("utf-8"))
+    images = table(photos / "notes.csv")
+    assert len(images) == 2
+    assert images[0]["caption"] == "a red\nsquare"
