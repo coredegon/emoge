@@ -51,9 +51,8 @@ in the columns `GEOMETRY`; places are shares of the height and the width.
 
 ```python
 print(regions.GEOMETRY)  # ('area', 'y', 'x', 'spread y', 'spread x')
-print(
-    regions.geometry(cells)[0].round(3).tolist()
-)  # [0.167, 0.25, 0.167, 0.144, 0.096]
+shapes = regions.geometry(cells)
+print(shapes[0].round(3).tolist())  # [0.167, 0.25, 0.167, 0.144, 0.096]
 ```
 
 `adjacency(masks)` tells how much every two regions are neighbours: pixels side
