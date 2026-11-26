@@ -110,6 +110,17 @@ def test_weights_give_the_palette_of_a_region():
         MODEL.palette(IMAGE, np.zeros((30, 40)))
 
 
+def test_repeating_colors_are_worked_out_once_to_the_same_palette():
+    rng = np.random.default_rng(5)
+    colors = rng.integers(0, 256, (20, 3), dtype=np.uint8)
+    photo = colors[rng.integers(0, 20, (60, 80))]  # 20 colors, as a photo repeats
+    degrees = MODEL.degrees(photo)
+    assert MODEL.palette(photo) == pytest.approx(degrees.mean(axis=(1, 2)))
+    masks = rng.random((3, 60, 80))
+    expected = [(degrees * mask).sum(axis=(1, 2)) / mask.sum() for mask in masks]
+    assert MODEL.palette(photo, masks) == pytest.approx(np.stack(expected))
+
+
 def test_cooccurrence_tells_how_often_colors_are_neighbours():
     flag = np.zeros((4, 6, 3), dtype=np.uint8)
     flag[:, :3], flag[:, 3:] = [255, 0, 0], [0, 0, 255]

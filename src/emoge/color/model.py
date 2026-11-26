@@ -16,6 +16,8 @@ from emoge.fuzzy.variables import Variable
 
 # Pixels worked on at once: bounds the (colors x pixels) array of degrees.
 _PIXELS_PER_BLOCK = 1 << 16
+# Above this share of distinct colors among the pixels, finding them does not pay.
+_MOST_DISTINCT = 0.8
 
 
 class ColorModel:
@@ -132,7 +134,8 @@ class ColorModel:
 
         `weights`, one for every pixel, weigh the mean, as a soft mask of a
         region does. Masks stacked along a first axis give a palette each,
-        `(len(masks), len(colors))`, from degrees worked out once.
+        `(len(masks), len(colors))`, from degrees worked out once. In an 8-bit
+        image colors repeat, and each is worked out once for all its pixels.
         """
         pixels = np.asarray(image)
         pixel_shape = pixels.shape[:-1]
@@ -151,6 +154,15 @@ class ColorModel:
         mass = masks.sum(axis=1, dtype=np.float64)
         if masks.min() < 0 or not (mass > 0).all():
             raise ValueError("weights are at least 0, and above 0 somewhere in a mask")
+        distinct = _distinct(pixels)
+        if distinct is not None:
+            # Every color once, weighed by the weights of its pixels.
+            pixels, where, counts = distinct
+            if weights is None:
+                masks = counts[None]
+            else:
+                colors = len(pixels)
+                masks = np.stack([np.bincount(where, mask, colors) for mask in masks])
         totals = np.zeros((len(masks), len(self.colors)))
         for start in range(0, len(pixels), _PIXELS_PER_BLOCK):
             block = slice(start, start + _PIXELS_PER_BLOCK)
@@ -223,6 +235,26 @@ class ColorModel:
             for family, variables in self.families.items()
         )
         return f"ColorModel({self.name!r}, {self.space.name}: {sizes})"
+
+
+def _distinct(
+    rgb: ArrayLike,
+) -> tuple[NDArray[np.uint8], NDArray[np.intp], NDArray[np.intp]] | None:
+    """The distinct colors of 8-bit pixels, which of them each pixel is, how many.
+
+    None for pixels that are not bytes, or barely repeat: those are quicker
+    worked out as they are.
+    """
+    pixels = np.asarray(rgb)
+    if pixels.dtype != np.uint8 or pixels.ndim < 2 or pixels.shape[-1] != 3:
+        return None
+    flat = pixels.reshape(-1, 3).astype(np.int32)
+    packed = flat[:, 0] << 16 | flat[:, 1] << 8 | flat[:, 2]
+    unique, where, counts = np.unique(packed, return_inverse=True, return_counts=True)
+    if len(unique) > _MOST_DISTINCT * len(packed):
+        return None
+    colors = np.stack([unique >> 16, unique >> 8 & 255, unique & 255], axis=-1)
+    return colors.astype(np.uint8), where, counts
 
 
 def _color_names(family: str, variables: Sequence[Variable]) -> list[str]:
