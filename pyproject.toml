@@ -1,6 +1,6 @@
 [project]
 name = "emoge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Research packages: fuzzy color models, and more to come."
 readme = "README.md"
 license = "0BSD"
@@ -13,6 +13,10 @@ dependencies = [
     "matplotlib>=3.9",
     "numpy>=2.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/coredegon/emoge"
+Issues = "https://github.com/coredegon/emoge/issues"
 
 [build-system]
 requires = ["uv_build>=0.13.7,<0.14.0"]
