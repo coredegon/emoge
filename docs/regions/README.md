@@ -74,3 +74,19 @@ A palette of [`emoge.color`](../color/README.md) takes masks:
 palettes = color.COLIBRI.palette(flag, cells)
 print(palettes.shape)  # (6, 86)
 ```
+
+## Plots
+
+`plot_regions(image, masks)` draws an image with the borders of its regions.
+`fill=True` paints every pixel in the mean color of its regions, each by its
+degree; `numbers=True` numbers the regions at their middles, as the nodes of
+their graph are named; `borders=False` leaves the borders out.
+
+```python
+ax = regions.plot_regions(flag, cells, numbers=True)
+```
+
+![Superpixels of a photo: borders and numbers, filled, and soft](img/superpixels.png)
+
+Crisp superpixels keep together: a small piece of one joins the region it
+borders most. Soft ones blend into each other, and their fill is smooth.

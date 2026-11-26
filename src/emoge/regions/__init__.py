@@ -12,6 +12,15 @@ from emoge.regions.adjacency import adjacency
 from emoge.regions.geometry import GEOMETRY, geometry
 from emoge.regions.grids import grid
 from emoge.regions.masks import masks
+from emoge.regions.plots import plot_regions
 from emoge.regions.superpixels import superpixels
 
-__all__ = ["GEOMETRY", "adjacency", "geometry", "grid", "masks", "superpixels"]
+__all__ = [
+    "GEOMETRY",
+    "adjacency",
+    "geometry",
+    "grid",
+    "masks",
+    "plot_regions",
+    "superpixels",
+]
