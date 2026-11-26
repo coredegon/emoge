@@ -139,9 +139,8 @@ class ColorModel:
         pixels = pixels.reshape(-1, *pixels.shape[-1:])  # `degrees` checks it
         if not len(pixels):
             raise ValueError("an image without pixels has no palette")
-        masks = np.ones(pixel_shape)
-        if weights is not None:
-            masks = np.asarray(weights, dtype=np.float64)
+        # Masks stay as given, often bytes or bools; a block at a time becomes floats.
+        masks = np.ones(pixel_shape) if weights is None else np.asarray(weights)
         stacked = masks.shape != pixel_shape
         if stacked and masks.shape[1:] != pixel_shape:
             raise ValueError(
@@ -149,13 +148,14 @@ class ColorModel:
                 f"or a stack of it; got {masks.shape}"
             )
         masks = masks.reshape(-1, len(pixels))
-        mass = masks.sum(axis=1)
-        if (masks < 0).any() or not (mass > 0).all():
+        mass = masks.sum(axis=1, dtype=np.float64)
+        if masks.min() < 0 or not (mass > 0).all():
             raise ValueError("weights are at least 0, and above 0 somewhere in a mask")
         totals = np.zeros((len(masks), len(self.colors)))
         for start in range(0, len(pixels), _PIXELS_PER_BLOCK):
             block = slice(start, start + _PIXELS_PER_BLOCK)
-            totals += masks[:, block] @ self.degrees(pixels[block]).T
+            weights_here = masks[:, block].astype(np.float64)
+            totals += weights_here @ self.degrees(pixels[block]).T
         palettes = totals / mass[:, None]
         return palettes if stacked else palettes[0]
 
