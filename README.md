@@ -7,7 +7,7 @@ emotions they evoke.
 
 | Package | What it is for | Guide |
 |---|---|---|
-| `emoge.fuzzy_color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/fuzzy_color](docs/fuzzy_color/guide.md) |
+| `emoge.fuzzy_color` | Fuzzy color models: the degree to which every pixel belongs to every named color, and the color composition of an image | [docs/fuzzy_color](docs/fuzzy_color/) |
 
 ## Disclaimer
 
