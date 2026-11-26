@@ -45,6 +45,14 @@ Every word learns where its core starts and ends. The cores keep their order,
 and the degrees of a pixel still sum to 1. A partition that several families
 share, as saturation in COLIBRI, learns once.
 
+Free cores may drift from their meaning: a red that moves into orange is no
+longer red. `drift()` tells how far they have moved, and added to the loss it
+holds them, the more the larger its weight:
+
+```python
+loss = -layer(values)[..., 0].mean() + 10 * layer.drift()
+```
+
 ## Palettes and neighbours
 
 `palette(degrees, weights)` and `cooccurrence(degrees, distance)` are those of

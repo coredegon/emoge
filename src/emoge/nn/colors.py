@@ -72,6 +72,15 @@ class FuzzyColors(torch.nn.Module):
             blocks.append(degrees)
         return torch.cat(blocks, dim=-1)
 
+    def drift(self) -> torch.Tensor:
+        """Return how far the cores have moved from where they started.
+
+        The mean square of the moves of their ends, each a share of its
+        channel. Added to a loss, `loss + weight * layer.drift()`, it keeps the
+        words near their meaning, the nearer the larger the weight.
+        """
+        return torch.stack([learned.drift() for learned in self._learned]).mean()
+
     def to_model(self) -> ColorModel:
         """Return a `ColorModel` with the cores as learned now."""
         made = [learned.partition() for learned in self._learned]
@@ -96,6 +105,8 @@ class _Learned(torch.nn.Module):
     circle, where its first core starts.
     """
 
+    initial: torch.Tensor  # where the ends of the cores started
+
     def __init__(self, made: Partition) -> None:
         super().__init__()
         self.channel, self.names = made.channel, list(made.cores)
@@ -113,6 +124,14 @@ class _Learned(torch.nn.Module):
             lengths = [b - a for a, b in itertools.pairwise(points)]
         start_lengths = torch.tensor(lengths, dtype=torch.float32) + _TINY * self.span
         self.lengths = torch.nn.Parameter(torch.log(start_lengths))
+        self.register_buffer("initial", self._bounds().detach().clone())
+
+    def drift(self) -> torch.Tensor:
+        """Return the mean square move of the ends of the cores, as shares."""
+        moved = self._bounds() - self.initial
+        if self.channel.periodic:  # the shorter way round
+            moved = torch.remainder(moved + self.span / 2, self.span) - self.span / 2
+        return (moved / self.span).square().mean()
 
     def _bounds(self) -> torch.Tensor:
         """Where every core starts and ends, in order: `(terms, 2)`."""

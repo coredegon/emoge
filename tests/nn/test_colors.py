@@ -49,6 +49,23 @@ def test_learned_cores_keep_a_partition():
     assert torch.allclose(degrees, as_colors_last(learned.degrees(IMAGE)), atol=1e-4)
 
 
+def train(layer, weight):
+    optimizer = torch.optim.Adam(layer.parameters(), lr=0.05)
+    for _ in range(20):
+        optimizer.zero_grad()
+        loss = -layer(VALUES)[..., 0].mean() + weight * layer.drift()
+        loss.backward()
+        optimizer.step()
+    return layer.drift().item()
+
+
+def test_drift_keeps_the_words_near_their_meaning():
+    assert FuzzyColors(COLIBRI).drift().item() == 0.0
+    free = train(FuzzyColors(COLIBRI), weight=0)
+    held = train(FuzzyColors(COLIBRI), weight=100)
+    assert 0 < held < free / 10
+
+
 def test_only_partitions_joined_with_the_product_learn():
     level = partition(Channel("intensity", 0, 1), {"dark": 0, "light": 1})
     with pytest.raises(ValueError, match="product"):
