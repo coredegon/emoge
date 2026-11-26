@@ -47,6 +47,8 @@ def superpixels(
     height, width = rgb.shape[:2]
     if count < 1:
         raise ValueError(f"superpixels number at least 1, got {count}")
+    if not compactness > 0:
+        raise ValueError(f"compactness is above 0, got {compactness}")
     side = math.sqrt(height * width / count)  # between neighbouring starts
     scale = compactness / side
     ys, xs = np.mgrid[0:height, 0:width]

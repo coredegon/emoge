@@ -59,3 +59,10 @@ def test_one_superpixel_is_the_whole_image():
     assert superpixels(FLAG, 1).all()
     with pytest.raises(ValueError, match="at least 1"):
         superpixels(FLAG, 0)
+
+
+def test_what_superpixels_refuse():
+    with pytest.raises(ValueError, match="at least 1"):
+        superpixels(FLAG, 0)
+    with pytest.raises(ValueError, match="compactness"):
+        superpixels(FLAG, 24, compactness=0)

@@ -44,3 +44,9 @@ def test_relations_add_their_words_to_the_edges():
     assert graph.edge_features == ("border", "distance", "light/alike", "light/apart")
     assert graph.edges[0, 2, 2:].sum() == pytest.approx(1.0)  # two red cells
     assert graph.edges[0, 3, 2:].sum() == 0  # no edge, no words
+
+
+def test_a_region_with_no_pixels_is_refused():
+    empty = np.concatenate([CELLS, np.zeros((1, 40, 60))])
+    with pytest.raises(ValueError, match="above 0"):
+        region_graph(COLIBRI, FLAG, empty)

@@ -33,13 +33,12 @@ def region_graph(
     gives them. Regions that do not touch have no edge.
     """
     regions = np.asarray(masks, dtype=np.float64)
+    palettes = model.palette(image, regions)  # refuses a region with no pixels
     lab = OKLAB.from_rgb(to_float_rgb(image))
     mean_lab = (
         np.einsum("rhw,hwc->rc", regions, lab) / regions.sum(axis=(1, 2))[:, None]
     )
-    nodes = np.column_stack(
-        [model.palette(image, regions), geometry(regions), mean_lab]
-    )
+    nodes = np.column_stack([palettes, geometry(regions), mean_lab])
     touch = adjacency(regions)
     looks = np.linalg.norm(mean_lab[:, None] - mean_lab[None], axis=-1)
     words, degrees = relate(fit_into_rgb(OKLAB.to_rgb(mean_lab)), relations or {})
