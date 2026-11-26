@@ -8,14 +8,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+from emoge.color import spaces
 from emoge.color.model import ColorModel
 from emoge.color.space import Space
-from emoge.color.spaces import HSI, HSV, OKLAB, OKLCH, RGB
 from emoge.fuzzy.math import norms
 from emoge.fuzzy.partitions import Partition, partition
 from emoge.fuzzy.variables import Variable
 
-_SPACES = {space.name: space for space in (HSI, HSV, OKLAB, OKLCH, RGB)}
+# Every space of emoge.color, by name.
+_SPACES = {
+    space.name: space for space in vars(spaces).values() if isinstance(space, Space)
+}
 
 
 def save(model: ColorModel, path: str | os.PathLike[str]) -> None:
