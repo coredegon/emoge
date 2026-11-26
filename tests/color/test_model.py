@@ -110,6 +110,32 @@ def test_weights_give_the_palette_of_a_region():
         MODEL.palette(IMAGE, np.zeros((30, 40)))
 
 
+def test_cooccurrence_tells_how_often_colors_are_neighbours():
+    flag = np.zeros((4, 6, 3), dtype=np.uint8)
+    flag[:, :3], flag[:, 3:] = [255, 0, 0], [0, 0, 255]
+    meets = MODEL.cooccurrence(flag)
+    red, blue = MODEL.colors.index("red/vivid"), MODEL.colors.index("blue/vivid")
+    # 38 neighbours: 17 red beside red, 17 blue beside blue, 4 across the border.
+    assert meets[red, red] == pytest.approx(17 / 38)
+    assert meets[blue, blue] == pytest.approx(17 / 38)
+    assert meets[red, blue] == meets[blue, red] == pytest.approx(2 / 38)
+    assert meets.sum() == pytest.approx(1.0)
+
+
+def test_cooccurrence_goes_a_block_of_rows_at_a_time():
+    large = np.random.default_rng(1).integers(0, 256, (300, 300, 3), dtype=np.uint8)
+    degrees = MODEL.degrees(large)
+    across = degrees[:, :, :-2].reshape(8, -1) @ degrees[:, :, 2:].reshape(8, -1).T
+    down = degrees[:, :-2].reshape(8, -1) @ degrees[:, 2:].reshape(8, -1).T
+    both = across + down
+    expected = (both + both.T) / (2 * 2 * 300 * 298)
+    assert MODEL.cooccurrence(large, distance=2) == pytest.approx(expected)
+    with pytest.raises(ValueError, match="height, width"):
+        MODEL.cooccurrence(large.reshape(-1, 3))
+    with pytest.raises(ValueError, match="no neighbours"):
+        MODEL.cooccurrence(large[:1, :1])
+
+
 def test_prototypes_are_typical_colors():
     typical = dict(zip(MODEL.colors, MODEL.prototypes().tolist(), strict=True))
     assert typical["dark"] == pytest.approx([0, 0, 0], abs=1e-3)

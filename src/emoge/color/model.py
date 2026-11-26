@@ -159,6 +159,41 @@ class ColorModel:
         palettes = totals / mass[:, None]
         return palettes if stacked else palettes[0]
 
+    def cooccurrence(self, image: ArrayLike, distance: int = 1) -> NDArray[np.float64]:
+        """Return how often every two colors are neighbours in an image.
+
+        Two pixels `distance` apart, side by side or one above the other, are
+        neighbours. Their degrees are multiplied and averaged over all
+        neighbours both ways round: the result, `(len(colors), len(colors))`, is
+        symmetric and sums to 1 where the degrees of a pixel do. Its diagonal is
+        a color beside itself, the rest are borders between colors.
+        """
+        pixels = np.asarray(image)
+        if pixels.ndim != 3:
+            raise ValueError(f"an image is (height, width, 3), got {pixels.shape}")
+        if distance < 1:
+            raise ValueError(f"neighbours are at least 1 apart, got {distance}")
+        height, width = pixels.shape[:2]
+        totals = np.zeros((len(self.colors), len(self.colors)))
+        pairs = 0
+        step = max(1, _PIXELS_PER_BLOCK // max(width, 1))
+        for top in range(0, height, step):
+            # The rows of this block and `distance` more, for their neighbours below.
+            block = self.degrees(pixels[top : top + step + distance])
+            rows = min(step, height - top)
+            below = max(0, min(rows, block.shape[1] - distance))
+            side_by_side = block[:, :rows, :-distance], block[:, :rows, distance:]
+            one_above = block[:, :below], block[:, distance : distance + below]
+            for one, other in (side_by_side, one_above):
+                one, other = one.reshape(len(one), -1), other.reshape(len(other), -1)
+                totals += one @ other.T
+                pairs += one.shape[1]
+        if not pairs:
+            raise ValueError(
+                f"an image of {height} x {width} has no neighbours {distance} apart"
+            )
+        return (totals + totals.T) / (2 * pairs)
+
     def prototypes(self) -> NDArray[np.float64]:
         """Return a typical RGB color for every color: shape `(len(colors), 3)`.
 

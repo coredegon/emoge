@@ -32,6 +32,7 @@ for i in np.argsort(-degrees)[:2]:
 | `label(rgb)`, `classify(rgb)` | the strongest color: its name, or its index in `colors` |
 | `strongest(rgb)` | the index of the strongest color and its degree |
 | `palette(image, weights)` | how much of the image each color takes; with `weights`, a mask or a stack of masks, how much of each region |
+| `cooccurrence(image, distance)` | how often every two colors are neighbours, as below |
 | `prototypes()` | a typical RGB color for every color, as below |
 
 ![The 86 colors of COLIBRI](img/colibri_swatches.png)
@@ -130,6 +131,30 @@ To relate all the colors of a model at once, give it their prototypes: with
 
 In Oklab, the length of a difference is how different two colors look:
 `np.linalg.norm(difference(a, b, OKLAB), axis=-1)`.
+
+## Which colors meet
+
+`cooccurrence(image)` tells how often every two colors of a model are
+neighbours: two pixels side by side or one above the other, or `distance`
+apart. The result is symmetric; its diagonal is a color beside itself, the rest
+are the borders between colors.
+
+```python
+flag = np.zeros((4, 6, 3), dtype=np.uint8)
+flag[:, :3], flag[:, 3:] = [255, 0, 0], [0, 0, 255]  # red beside blue
+meets = toy.cooccurrence(flag)
+red, blue = toy.colors.index("red/vivid"), toy.colors.index("blue/vivid")
+print(meets[[red, blue]][:, [red, blue]].round(3).tolist())
+# [[0.447, 0.053], [0.053, 0.447]]
+```
+
+Of 38 pairs of neighbours, 17 are red beside red, 17 blue beside blue, and 4
+cross the border, split between the two sides of the diagonal. Neighbours are
+counted in pixels, so give images one size to compare them.
+
+Together these describe the colors of an image as a graph: `palette` weighs the
+colors, `cooccurrence` tells which of them meet, and the `difference` of their
+prototypes how they relate.
 
 ## Plots
 
