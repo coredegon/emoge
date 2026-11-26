@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from emoge.color.space import Space
-from emoge.color.spaces.rgb import fit_into_rgb, to_float_rgb
+from emoge.color.spaces.rgb import to_float_rgb
 from emoge.fuzzy.math.norms import Norm, product
 from emoge.fuzzy.variables import Variable
 
@@ -18,6 +18,8 @@ from emoge.fuzzy.variables import Variable
 _PIXELS_PER_BLOCK = 1 << 16
 # Above this share of distinct colors among the pixels, finding them does not pay.
 _MOST_DISTINCT = 0.8
+# How far outside [0, 1] a component of a prototype may stray, from rounding.
+_SLACK = 1e-9
 
 
 class ColorModel:
@@ -73,6 +75,7 @@ class ColorModel:
         self.and_norm = and_norm
         self.colors = colors
         self._colors_then_empty = np.array([*colors, ""])  # index len(colors): none
+        self._prototypes: NDArray[np.float64] | None = None
 
     def degrees(self, rgb: ArrayLike) -> NDArray[np.float64]:
         """Return the degree of the pixels in every color: `(len(colors), *pixels)`."""
@@ -210,9 +213,16 @@ class ColorModel:
         """Return a typical RGB color for every color: shape `(len(colors), 3)`.
 
         A channel takes the middle of the core of the color's term, or the middle
-        of the channel if the family does not describe it. A color too bright for
-        RGB is darkened until it fits.
+        of the channel if the family does not describe it. Where RGB cannot show
+        that, as for a light vivid red, the color takes the RGB color it is
+        strongest in, the one nearest to that middle, among 33 levels of every
+        component.
         """
+        if self._prototypes is None:
+            self._prototypes = self._typical_colors()
+        return self._prototypes.copy()
+
+    def _typical_colors(self) -> NDArray[np.float64]:
         middles = {c.name: (c.low + c.high) / 2.0 for c in self.space.channels}
         rows = []
         for variables in self.families.values():
@@ -222,7 +232,17 @@ class ColorModel:
                 for variable, center in zip(variables, centers, strict=True):
                     point[variable.channel.name] = float(center)
                 rows.append([point[channel.name] for channel in self.space.channels])
-        return fit_into_rgb(self.space.to_rgb(np.array(rows)))
+        rgb = self.space.to_rgb(np.array(rows))
+        outside = ((rgb < -_SLACK) | (rgb > 1.0 + _SLACK)).any(axis=-1)
+        if outside.any():
+            levels = np.linspace(0.0, 1.0, 33)
+            shown = np.stack(np.meshgrid(levels, levels, levels, indexing="ij"), -1)
+            shown = shown.reshape(-1, 3)
+            degrees = self.degrees(shown)[outside]
+            strongest = degrees >= degrees.max(axis=1, keepdims=True) - _SLACK
+            away = ((shown[None] - rgb[outside][:, None]) ** 2).sum(axis=-1)
+            rgb[outside] = shown[np.where(strongest, away, np.inf).argmin(axis=1)]
+        return np.clip(rgb, 0.0, 1.0)
 
     def _channel_values(self, rgb: ArrayLike) -> dict[str, NDArray[np.float64]]:
         """The values of every channel of the space for the pixels, by name."""

@@ -31,7 +31,7 @@ far apart their prototypes look.
 
 ```python
 colors = graphs.color_graph(color.COLIBRI, flag)
-print(colors)  # Graph(86 nodes, 3654 edges)
+print(colors)  # Graph(86 nodes, 3655 edges)
 print(colors.node_features)  # ('share', 'beside itself', 'lightness', 'a', 'b')
 print(colors.edge_features)  # ('neighbours', 'distance')
 share = colors.nodes[:, 0]

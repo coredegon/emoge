@@ -45,6 +45,19 @@ def test_the_partitions_keep_the_published_cores():
     assert INTENSITY.degrees(levels).tolist() == np.eye(5).tolist()
 
 
+def test_every_color_has_a_prototype_of_its_own():
+    prototypes = COLIBRI.prototypes()
+    assert len(np.unique(prototypes.round(6), axis=0)) == 86
+    # RGB cannot show a light vivid red; its prototype is still lighter.
+    names = list(COLIBRI.colors)
+    medium, light = prototypes[
+        [names.index(f"red/high/{s}") for s in ("medium", "light")]
+    ]
+    assert light.mean() > medium.mean()
+    labels = COLIBRI.label(prototypes).tolist()
+    assert sum(label == name for label, name in zip(labels, names, strict=True)) >= 84
+
+
 def test_shades_are_the_intensities_joined():
     x = np.linspace(0, 1, 1001)
     black, dark_gray, gray, light_gray, white = INTENSITY.degrees(x)
