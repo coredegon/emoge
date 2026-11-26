@@ -119,9 +119,7 @@ def _terms_around_circle(
     terms = []
     for corners in all_corners:
         term = _term_around_core(*corners)
-        if (
-            corners[-1] > high
-        ):  # past `high` the circle goes on at `low`: add that piece
+        if corners[-1] > high:  # past `high` the circle goes on at `low`: add that
             term = term | _term_around_core(*(corner - period for corner in corners))
         terms.append(term)
     return terms
