@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 _INK = (0.33, 0.32, 0.30)  # edges on a white ground
 _BLUE = (0.165, 0.471, 0.839)  # nodes with no color of their own
+_RIM = (0.72, 0.71, 0.69)  # round nodes, white ones too, on a white ground
 
 
 def plot_graph(
@@ -35,7 +36,8 @@ def plot_graph(
 
     A graph whose nodes have the features "y" and "x", as a graph of regions
     does, stands where they say, over `image` if given; any other stands round
-    a circle, its nodes in order, its edges bowing to the middle. A node is
+    a circle, the nodes shown spread evenly in their order, its edges bowing to
+    the middle. A node is
     painted in its color when it has "lightness", "a" and "b", in Oklab, and
     is as large as its "share" or "area"; one smaller than `least` of the
     largest is left out, with its edges. An edge is as thick and as strong as
@@ -66,30 +68,28 @@ def plot_graph(
             ax.imshow(to_float_rgb(image))
         else:
             ax.invert_yaxis()  # y runs down an image
-    else:
-        angle = (
-            np.pi / 2 - 2 * np.pi * np.arange(count) / count
-        )  # clockwise from the top
+    else:  # the shown nodes in order, evenly, clockwise from the top
+        turn = (np.cumsum(shown) - 1) / max(int(shown.sum()), 1)
+        angle = np.pi / 2 - 2 * np.pi * turn
         places = np.column_stack([np.cos(angle), np.sin(angle)])
     index = graph.edge_features.index(edges) if edges else 0
     _draw_edges(
         ax, graph.edges[..., index], places, shown, curved=not placed, over=over
     )
     largest = max(weight[shown].max(initial=0), 1e-12)
+    areas = (12 + 200 * weight / largest) if placed else (18 + 520 * weight / largest)
     ax.scatter(
         places[shown, 0],
         places[shown, 1],
-        s=(12 + 200 * weight[shown] / largest)
-        if placed
-        else (18 + 520 * weight[shown] / largest),
+        s=areas[shown],
         c=_paint(graph)[shown],
-        edgecolors="black" if placed else "white",
+        edgecolors="black" if placed else _RIM,
         linewidths=0.6,
         zorder=2,
     )
     named = labels if labels is not None else (not placed and shown.sum() <= 30)
     if named:
-        _label(ax, graph, places, shown, round_a_circle=not placed)
+        _label(ax, graph, places, shown, np.sqrt(areas) / 2, round_a_circle=not placed)
     if not placed:
         reach = 1.6 if named else 1.15
         ax.set(xlim=(-reach, reach), ylim=(-reach, reach))
@@ -163,17 +163,20 @@ def _label(
     graph: Graph,
     places: NDArray[np.float64],
     shown: NDArray[np.bool_],
+    radii: NDArray[np.float64],
     *,
     round_a_circle: bool,
 ) -> None:
-    """Name the shown nodes: outside a circle, or beside them where they stand."""
+    """Name the shown nodes: just outside a circle, or on them where they stand."""
     for i in np.nonzero(shown)[0]:
-        x, y = places[i] * (1.12 if round_a_circle else 1.0)
+        x, y = places[i]
+        away = (radii[i] + 4) * places[i] if round_a_circle else (0.0, 0.0)
         side = "left" if x > 0.05 else "right" if x < -0.05 else "center"
-        ax.text(
-            x,
-            y,
+        ax.annotate(
             graph.names[i],
+            (x, y),
+            xytext=tuple(away),
+            textcoords="offset points",
             fontsize="x-small",
             ha=side if round_a_circle else "center",
             va="center",

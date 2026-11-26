@@ -37,6 +37,9 @@ def test_a_graph_of_colors_stands_round_a_circle():
     shown = share >= 0.01 * share.max()
     assert len(dots(ax).get_offsets()) == shown.sum()
     assert np.allclose(np.hypot(*dots(ax).get_offsets().T), 1.0)  # on the circle
+    x, y = dots(ax).get_offsets().T
+    turns = np.diff(np.unwrap(np.arctan2(y, x)))
+    assert np.allclose(turns, -2 * np.pi / shown.sum())  # evenly, clockwise
     assert len(ax.texts) == shown.sum()  # few enough to name
     strong = (share >= 0.5 * share.max()).sum()
     assert len(plot_graph(graph, least=0.5).texts) == strong == 3

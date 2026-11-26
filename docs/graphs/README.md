@@ -93,11 +93,11 @@ print(len(saved), saved.sizes, saved[1])  # 2 [4 4] Graph(4 nodes, 4 edges)
 ## Plots
 
 `plot_graph(graph)` draws a graph. A graph of regions stands where its regions
-are, over `image` if given; a graph of colors stands round a circle, every color
-in its place, its edges bowing to the middle. Nodes are painted in their colors
-and as large as their share or area, edges as thick and as strong as their first
-feature, or the one `edges=` names. Colors smaller than `least` of the largest,
-1% unless told, are left out.
+are, over `image` if given; a graph of colors stands round a circle, the colors
+shown spread evenly in the order of the model, its edges bowing to the middle.
+Nodes are painted in their colors and as large as their share or area, edges as
+thick and as strong as their first feature, or the one `edges=` names. Colors
+smaller than `least` of the largest, 1% unless told, are left out.
 
 ```python
 ax = graphs.plot_graph(parts, image=flag)
