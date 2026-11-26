@@ -46,7 +46,11 @@ word passes into the next and their degrees sum to 1. What it makes is a
 height = fuzzy.Channel("y", 0, 1)  # from the top of an image down
 vertical = fuzzy.partition(height, {"top": 0, "middle": 0.5, "bottom": 1})
 print(vertical.degrees(0.25).tolist())  # [0.5, 0.5, 0.0]
+print(vertical.cores)  # {'top': (0, 0), 'middle': (0.5, 0.5), 'bottom': (1, 1)}
 ```
+
+A partition keeps its cores, even after `select` leaves out some of its words,
+so it can be saved, learned, or made again.
 
 Neighbouring words overlap, so `|` of them dips where they cross. To join
 neighbours, give `partition` one core for both:

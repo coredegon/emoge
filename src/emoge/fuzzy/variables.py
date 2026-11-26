@@ -67,4 +67,4 @@ class Variable:
         return low + (mean_angle % math.tau) * ((high - low) / math.tau)
 
     def __repr__(self) -> str:
-        return f"Variable({self.channel.name}: {', '.join(self.terms)})"
+        return f"{type(self).__name__}({self.channel.name}: {', '.join(self.terms)})"

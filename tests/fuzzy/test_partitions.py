@@ -20,6 +20,15 @@ def test_a_partition_sums_to_one():
     ]
 
 
+def test_a_partition_keeps_its_cores():
+    level = partition(UNIT, {"low": 0.1, "medium": (0.4, 0.6), "high": 0.9})
+    assert level.cores == {"low": (0.1, 0.1), "medium": (0.4, 0.6), "high": (0.9, 0.9)}
+    high = level.select("high")
+    assert list(high.terms) == ["high"]
+    assert high.cores == level.cores  # the whole partition, to make it again
+    assert repr(high) == "Partition(unit: high)"
+
+
 def test_a_periodic_partition_wraps_around():
     hue = partition(HUE, {"red": (350, 10), "green": 120, "blue": 240})
     assert hue.degrees(0.0).tolist() == [1.0, 0.0, 0.0]

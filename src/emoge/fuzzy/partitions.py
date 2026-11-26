@@ -15,7 +15,28 @@ from emoge.fuzzy.variables import Variable
 type Core = float | tuple[float, float]
 
 
-def partition(channel: Channel, cores: Mapping[str, Core]) -> Variable:
+class Partition(Variable):
+    """A variable made by `partition`, which keeps the cores it was made from.
+
+    `cores` holds the core of every term as `(start, end)`, in order, also of
+    the terms `select` leaves out: the whole partition can be made again.
+    """
+
+    def __init__(
+        self,
+        channel: Channel,
+        cores: Mapping[str, tuple[float, float]],
+        terms: Mapping[str, FuzzySet],
+    ) -> None:
+        super().__init__(channel, terms)
+        self.cores = dict(cores)
+
+    def select(self, *names: str) -> Partition:
+        """Return the partition with only the named terms, keeping all its cores."""
+        return Partition(self.channel, self.cores, super().select(*names).terms)
+
+
+def partition(channel: Channel, cores: Mapping[str, Core]) -> Partition:
     """Build a variable whose terms sum to 1, from the core of every term.
 
     ```python
@@ -37,7 +58,11 @@ def partition(channel: Channel, cores: Mapping[str, Core]) -> Variable:
         terms = _terms_around_circle(ranges, channel.low, channel.high)
     else:
         terms = _terms_along_line(ranges, channel.low, channel.high)
-    return Variable(channel, dict(zip(cores, terms, strict=True)))
+    return Partition(
+        channel,
+        dict(zip(cores, ranges, strict=True)),
+        dict(zip(cores, terms, strict=True)),
+    )
 
 
 def _term_around_core(
