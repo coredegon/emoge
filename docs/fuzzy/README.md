@@ -94,6 +94,22 @@ print(cells.tolist())  # [[0.0, 0.25, 0.25], [0.0, 0.25, 0.25], [0.0, 0.0, 0.0]]
 A point a quarter of the way down and three quarters across shares four cells
 equally.
 
+## Sentences about many items
+
+`truth(quantifier, degrees)` tells how true it is that a quantifier of the
+items, like most of them, are as their degrees say. `among=` keeps the sentence
+to a group, given by the degree of every item in it.
+
+```python
+dark = [0.9, 0.8, 0.2, 1.0]  # how dark each of four images is
+fear = [1, 1, 0, 1]  # which of them are fearful
+print(round(fuzzy.truth(most, dark), 2))  # 0.75
+print(fuzzy.truth(most, dark, among=fear))  # 1.0
+```
+
+Of all four images, a share of 0.725 is dark, which is "most" to 0.75; of the
+fearful ones, a share of 0.9, which is "most" fully.
+
 ## Plots
 
 `plot_variable(variable)` draws the words of a variable and returns its Axes.

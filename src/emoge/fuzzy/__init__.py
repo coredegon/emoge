@@ -31,6 +31,7 @@ from emoge.fuzzy.shapes import (
     two_sided_gaussian,
     z_shape,
 )
+from emoge.fuzzy.summaries import truth
 from emoge.fuzzy.variables import Variable
 
 __all__ = [
@@ -55,6 +56,7 @@ __all__ = [
     "singleton",
     "trapezoid",
     "triangle",
+    "truth",
     "two_sided_gaussian",
     "z_shape",
 ]
