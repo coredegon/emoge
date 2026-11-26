@@ -8,9 +8,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from emoge.fuzzy_color import FuzzySet, plot_swatches, plot_terms
-from emoge.fuzzy_color.math import membership as mf
-from emoge.fuzzy_color.models import COLIBRI
+import emoge.fuzzy_color as fc
 from emoge.fuzzy_color.models.colibri import HUE
 
 IMAGES = Path(__file__).parent / "img"
@@ -18,22 +16,22 @@ BLUE, ORANGE, GREEN, RED = "#2a78d6", "#eb6834", "#1baf7a", "#e34948"
 INK, GRAY = "#333333", "#aaaaaa"
 # Every membership function as a set whose parameters show its shape on [0, 10].
 GALLERY = [
-    FuzzySet(mf.triangle, (2, 5, 8)),
-    FuzzySet(mf.trapezoid, (1, 3, 6, 9)),
-    FuzzySet(mf.rising, (3, 7)),
-    FuzzySet(mf.falling, (3, 7)),
-    FuzzySet(mf.rectangle, (3, 7)),
-    FuzzySet(mf.singleton, (5,)),
-    FuzzySet(mf.piecewise_linear, (((1, 0), (3, 1), (6, 0.4), (9, 0)),)),
-    FuzzySet(mf.gaussian, (5, 1.5)),
-    FuzzySet(mf.two_sided_gaussian, (4, 1, 6, 2)),
-    FuzzySet(mf.generalized_bell, (5, 2, 3)),
-    FuzzySet(mf.sigmoid, (5, 2)),
-    FuzzySet(mf.sigmoid_difference, (3, 4, 7, 4)),
-    FuzzySet(mf.sigmoid_product, (3, 4, 7, -4)),
-    FuzzySet(mf.s_shape, (2, 8)),
-    FuzzySet(mf.z_shape, (2, 8)),
-    FuzzySet(mf.pi_shape, (1, 4, 6, 9)),
+    fc.triangle(2, 5, 8),
+    fc.trapezoid(1, 3, 6, 9),
+    fc.rising(3, 7),
+    fc.falling(3, 7),
+    fc.rectangle(3, 7),
+    fc.singleton(5),
+    fc.piecewise_linear(((1, 0), (3, 1), (6, 0.4), (9, 0))),
+    fc.gaussian(5, 1.5),
+    fc.two_sided_gaussian(4, 1, 6, 2),
+    fc.generalized_bell(5, 2, 3),
+    fc.sigmoid(5, 2),
+    fc.sigmoid_difference(3, 4, 7, 4),
+    fc.sigmoid_product(3, 4, 7, -4),
+    fc.s_shape(2, 8),
+    fc.z_shape(2, 8),
+    fc.pi_shape(1, 4, 6, 9),
 ]
 
 
@@ -62,8 +60,8 @@ def membership_gallery():
 
 def combining():
     """What & | ~ make of dark and light intensities."""
-    dark = FuzzySet(mf.falling, (0.2, 0.4))
-    light = FuzzySet(mf.rising, (0.6, 0.8))
+    dark = fc.falling(0.2, 0.4)
+    light = fc.rising(0.6, 0.8)
     panels = {
         "dark | light": dark | light,
         "~dark": ~dark,
@@ -118,5 +116,5 @@ if __name__ == "__main__":
     membership_gallery()
     combining()
     union_of_neighbours()
-    save(plot_terms(COLIBRI)[0, 0].figure, "colibri_terms.png")
-    save(plot_swatches(COLIBRI)[0].figure, "colibri_swatches.png")
+    save(fc.plot_terms(fc.COLIBRI)[0, 0].figure, "colibri_terms.png")
+    save(fc.plot_swatches(fc.COLIBRI)[0].figure, "colibri_swatches.png")

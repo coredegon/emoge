@@ -5,10 +5,10 @@ A fuzzy color model says it in numbers, a degree from 0 to 1 for every color.
 
 ```python
 import numpy as np
-from emoge.fuzzy_color import HSI, ColorModel, FuzzySet, partition
-from emoge.fuzzy_color.math import membership
-from emoge.fuzzy_color.models import COLIBRI
+import emoge.fuzzy_color as fc
 ```
+
+Everything below is at `fc.`.
 
 ## Naming colors
 
@@ -16,12 +16,12 @@ COLIBRI names 86 colors, after a survey of how people name them.
 
 ```python
 image = np.array([[[200, 30, 30], [250, 220, 40]], [[30, 60, 200], [20, 20, 20]]])
-print(COLIBRI.label(image).tolist())
+print(fc.COLIBRI.label(image).tolist())
 # [['red/high/dark', 'yellow/high/light'], ['blue/high/medium', 'black']]
 
-degrees = COLIBRI.degrees([230, 90, 40])  # an orange-red pixel
+degrees = fc.COLIBRI.degrees([230, 90, 40])  # an orange-red pixel
 for i in np.argsort(-degrees)[:2]:
-    print(COLIBRI.colors[i], round(float(degrees[i]), 2))
+    print(fc.COLIBRI.colors[i], round(float(degrees[i]), 2))
 # orange/high/medium 0.48
 # red/high/medium 0.26
 ```
@@ -36,8 +36,8 @@ for i in np.argsort(-degrees)[:2]:
 
 ![The 86 colors of COLIBRI](img/colibri_swatches.png)
 
-For many images, `lookup_table(COLIBRI, "colibri.npz")` classifies every 8-bit
-pixel once and keeps the table in that file, 0.6 MB compressed; then
+For many images, `fc.lookup_table(fc.COLIBRI, "colibri.npz")` classifies every
+8-bit pixel once and keeps the table in that file, 0.6 MB compressed; then
 `table[red, green, blue]` classifies a whole image at once. `degree=True` keeps
 the degree of each color too, in steps of 1/255.
 
@@ -51,12 +51,12 @@ degree is the degrees of its words multiplied.
 ### A word is a fuzzy set
 
 ```python
-vivid = FuzzySet(membership.rising, (0.25, 0.75))  # on saturation
+vivid = fc.rising(0.25, 0.75)  # on saturation
 print(vivid.degrees([0.1, 0.5, 0.9]).tolist())  # [0.0, 0.5, 1.0]
 ```
 
-The shape comes from `math.membership`, written as in the titles below; a
-function of your own, `function(x, *parameters)`, works as well.
+Every shape below is made as its title reads. A function of your own,
+`function(x, *parameters)`, makes a set with `fc.FuzzySet(function, parameters)`.
 
 ![The membership functions](img/membership.png)
 
@@ -64,8 +64,8 @@ Words combine into new words: `a & b` is the smaller degree, `a | b` the larger,
 `~a` one minus it.
 
 ```python
-dark = FuzzySet(membership.falling, (0.2, 0.4))  # on intensity
-light = FuzzySet(membership.rising, (0.6, 0.8))
+dark = fc.falling(0.2, 0.4)  # on intensity
+light = fc.rising(0.6, 0.8)
 middle = ~dark & ~light  # neither dark nor light
 print(middle.degrees([0.1, 0.5, 0.9]).tolist())  # [0.0, 1.0, 0.0]
 ```
@@ -84,10 +84,12 @@ fully each word; in between, one word passes into the next and their degrees sum
 to 1.
 
 ```python
-saturation = partition(HSI.channel("saturation"), {"gray": 0, "pale": 0.5, "vivid": 1})
+saturation = fc.partition(
+    fc.HSI.channel("saturation"), {"gray": 0, "pale": 0.5, "vivid": 1}
+)
 print(saturation.degrees(0.25).tolist())  # [0.5, 0.5, 0.0]
 
-hue = partition(HSI.channel("hue"), {"red": (350, 10), "green": 120, "blue": 240})
+hue = fc.partition(fc.HSI.channel("hue"), {"red": (350, 10), "green": 120, "blue": 240})
 print(hue.degrees([355, -5, 180]).round(2).tolist())
 # [[1.0, 1.0, 0.0], [0.0, 0.0, 0.5], [0.0, 0.0, 0.5]]
 ```
@@ -99,10 +101,10 @@ Hue is a circle: -5 is 355, and red runs across 0.
 A family takes one word from each of its channels; a model is its families.
 
 ```python
-intensity = partition(HSI.channel("intensity"), {"dark": 0, "light": 1})
-toy = ColorModel(
+intensity = fc.partition(fc.HSI.channel("intensity"), {"dark": 0, "light": 1})
+toy = fc.ColorModel(
     "toy",
-    HSI,
+    fc.HSI,
     {
         "tint": [hue, saturation.select("pale", "vivid")],
         "gray": [intensity, saturation.select("gray")],
@@ -114,7 +116,7 @@ print(toy.label([0, 0, 255]))  # blue/vivid
 ```
 
 Gray has no hue, so its family leaves hue out. `and_norm=` joins the degrees of
-the words in another way than the product: a t-norm from `math.norms`.
+the words in another way than the product: a t-norm from `fc.norms`.
 
 ## Color spaces
 

@@ -6,8 +6,8 @@ import itertools
 import math
 from collections.abc import Mapping
 
-from emoge.fuzzy_color.math import membership
 from emoge.fuzzy_color.sets import FuzzySet
+from emoge.fuzzy_color.shapes import falling, rising, trapezoid, triangle
 from emoge.fuzzy_color.spaces.space import Channel
 from emoge.fuzzy_color.variables import Variable
 
@@ -44,8 +44,8 @@ def _term_around_core(
     rise_start: float, core_start: float, core_end: float, fall_end: float
 ) -> FuzzySet:
     if core_start == core_end:
-        return FuzzySet(membership.triangle, (rise_start, core_start, fall_end))
-    return FuzzySet(membership.trapezoid, (rise_start, core_start, core_end, fall_end))
+        return triangle(rise_start, core_start, fall_end)
+    return trapezoid(rise_start, core_start, core_end, fall_end)
 
 
 def _terms_along_line(
@@ -62,8 +62,8 @@ def _terms_along_line(
         _term_around_core(previous[1], *core, following[0])
         for previous, core, following in zip(cores, cores[1:], cores[2:], strict=False)
     ]
-    first = FuzzySet(membership.falling, (cores[0][1], cores[1][0]))
-    last = FuzzySet(membership.rising, (cores[-2][1], cores[-1][0]))
+    first = falling(cores[0][1], cores[1][0])
+    last = rising(cores[-2][1], cores[-1][0])
     return [first, *inner, last]
 
 

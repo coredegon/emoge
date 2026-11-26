@@ -18,7 +18,7 @@ class Variable:
     """A channel described by named fuzzy sets, its terms.
 
     ```python
-    level = Variable(channel, {"low": FuzzySet(membership.falling, (0.2, 0.4)), ...})
+    level = Variable(channel, {"low": falling(0.2, 0.4), ...})
     level.degrees(0.3)        # the degree in every term
     ```
 
