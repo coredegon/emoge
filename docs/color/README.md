@@ -42,6 +42,10 @@ every 8-bit pixel once and keeps the table in that file, 0.6 MB compressed; then
 `table[red, green, blue]` classifies a whole image at once. `degree=True` keeps
 the degree of each color too, in steps of 1/255.
 
+Any segmentation gives regions: its label map, `labels`, becomes a stack of
+masks with `labels == np.arange(labels.max() + 1)[:, None, None]`, and
+`palette(image, masks)` is then the palette of every region.
+
 ## How a model works
 
 A pixel first becomes hue, saturation and intensity, the channels of `HSI`.
