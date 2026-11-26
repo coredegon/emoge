@@ -53,6 +53,12 @@ def test_classify_and_label_name_the_strongest_color():
     assert MODEL.classify(IMAGE).tolist() == best.tolist()
 
 
+def test_strongest_gives_the_color_and_its_degree():
+    color, degree = MODEL.strongest(IMAGE)
+    assert color.tolist() == MODEL.classify(IMAGE).tolist()
+    assert degree.tolist() == MODEL.degrees(IMAGE).max(axis=0).tolist()
+
+
 def test_another_t_norm_still_finds_the_strongest_color():
     by_minimum = ColorModel("toy", HSI, FAMILIES, and_norm=norms.minimum)
     degrees = by_minimum.degrees(IMAGE)
@@ -70,6 +76,7 @@ def test_a_model_can_live_in_another_space():
 def test_a_pixel_of_no_color_gets_the_index_past_the_colors():
     vivid = ColorModel("vivid", HSI, {"v": [SATURATION.select("vivid")]})
     assert vivid.classify([[255, 0, 0], [90, 90, 90]]).tolist() == [0, 1]
+    assert vivid.strongest([90, 90, 90])[1] == 0.0
     assert vivid.label([[255, 0, 0], [90, 90, 90]]).tolist() == ["v", ""]
 
 

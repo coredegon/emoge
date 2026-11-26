@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -66,17 +67,23 @@ def _build(model: ColorModel, entry: np.dtype) -> Entries:
     table = np.empty((256, 256, 256), dtype=entry)
     levels = np.arange(256, dtype=np.uint8)
     green, blue = np.meshgrid(levels, levels, indexing="ij")
-    for red in range(256):  # one red level at a time: 65536 pixels
+
+    def fill(red: int) -> None:  # one red level: 65536 pixels
         pixels = np.stack([np.full_like(green, red), green, blue], axis=-1)
         table[red] = _entries(model, pixels, entry)
+
+    # NumPy lets go of the GIL while it computes, so threads share the levels.
+    with ThreadPoolExecutor() as pool:
+        list(pool.map(fill, range(256)))  # list() lets an error out
     return table
 
 
 def _entries(model: ColorModel, pixels: NDArray[np.uint8], entry: np.dtype) -> Entries:
     """The strongest color of every pixel, and its degree if the entry keeps it."""
+    color, degree = model.strongest(pixels)
     if entry.names is None:
-        return model.classify(pixels).astype(entry)
-    entries = np.empty(pixels.shape[:-1], dtype=entry)
-    entries["color"] = model.classify(pixels)
-    entries["degree"] = model.degrees(pixels).max(axis=0)  # 0 for no color
+        return color.astype(entry)
+    entries = np.empty(color.shape, dtype=entry)
+    entries["color"] = color
+    entries["degree"] = degree
     return entries

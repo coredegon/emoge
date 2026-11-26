@@ -30,6 +30,7 @@ for i in np.argsort(-degrees)[:2]:
 |---|---|
 | `degrees(rgb)` | the degree of every pixel in every color |
 | `label(rgb)`, `classify(rgb)` | the strongest color: its name, or its index in `colors` |
+| `strongest(rgb)` | the index of the strongest color and its degree |
 | `palette(image)` | how much of the image each color takes |
 | `prototypes()` | a typical RGB color for every color, as below |
 

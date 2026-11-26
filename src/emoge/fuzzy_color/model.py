@@ -93,6 +93,13 @@ class ColorModel:
         A pixel of no color, which a model with gaps between its terms leaves,
         gets `len(colors)`; of equally strong colors the first wins.
         """
+        return self.strongest(rgb)[0]
+
+    def strongest(self, rgb: ArrayLike) -> tuple[NDArray[np.intp], NDArray[np.float64]]:
+        """Return the strongest color of every pixel as in `classify`, and its degree.
+
+        A pixel of no color has degree 0.
+        """
         values = self._channel_values(rgb)
         pixel_shape = np.shape(rgb)[:-1]
         best_index = np.full(pixel_shape, len(self.colors), dtype=np.intp)
@@ -111,7 +118,7 @@ class ColorModel:
             best_index = np.where(stronger, first_color + index, best_index)
             best_degree = np.where(stronger, degree, best_degree)
             first_color += math.prod(len(variable.terms) for variable in variables)
-        return best_index
+        return best_index, best_degree
 
     def label(self, rgb: ArrayLike) -> NDArray[np.str_]:
         """Return the name of the strongest color of every pixel; "" for no color."""
