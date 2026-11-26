@@ -7,6 +7,7 @@ or comment lines right below it.
 
 import ast
 import contextlib
+import importlib.util
 import io
 import re
 import tokenize
@@ -72,8 +73,11 @@ def _sandbox(monkeypatch, tmp_path):
     "page", PAGES, ids=[page.relative_to(ROOT).as_posix() for page in PAGES]
 )
 def test_examples_in_the_documentation_run(page):
+    text = page.read_text(encoding="utf-8")
+    if "import torch" in text and importlib.util.find_spec("torch") is None:
+        pytest.skip("the page needs PyTorch")
     namespace = {"__name__": "__docs__"}
-    for code in BLOCK.findall(page.read_text(encoding="utf-8")):
+    for code in BLOCK.findall(text):
         found, alone = comments(code)
         for node in ast.parse(code).body:
             source = ast.get_source_segment(code, node)

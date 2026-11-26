@@ -14,6 +14,9 @@ dependencies = [
     "numpy>=2.0",
 ]
 
+[project.optional-dependencies]
+torch = ["torch>=2.6"]  # emoge.nn
+
 [project.urls]
 Repository = "https://github.com/coredegon/emoge"
 Issues = "https://github.com/coredegon/emoge/issues"
@@ -28,6 +31,15 @@ dev = [
     "ruff>=0.17.5",
     "ty>=0.0.104",
 ]
+
+# Torch for development and CI without CUDA, which PyPI adds on Linux.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.ruff.lint]
 select = [

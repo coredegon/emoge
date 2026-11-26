@@ -1,0 +1,67 @@
+# nn
+
+A color model that learns. `FuzzyColors` starts as a model of
+[`emoge.color`](../color/README.md), such as COLIBRI, and learns its cores, the
+values that are fully each word, along with the rest of a network. It needs
+PyTorch: `pip install emoge[torch]`.
+
+```python
+import numpy as np
+import torch
+from emoge import color, nn
+```
+
+Everything below is at `nn.`.
+
+## Degrees of colors
+
+The layer takes the channels of the model's space and gives the degree of every
+color, both along the last axis. Turn pixels into channels where the images are
+loaded; the layer then runs wherever the network does.
+
+```python
+images = np.random.default_rng(0).integers(0, 256, (2, 8, 8, 3))  # two images
+values = torch.as_tensor(color.HSI.from_rgb(images / 255), dtype=torch.float32)
+
+layer = nn.FuzzyColors(color.COLIBRI)
+degrees = layer(values)
+print(tuple(degrees.shape))  # (2, 8, 8, 86)
+```
+
+Before it learns, the layer is the model it started from.
+
+## Learning
+
+The cores learn with the rest of a network, as any parameters do:
+
+```python
+optimizer = torch.optim.Adam(layer.parameters(), lr=0.01)
+loss = -layer(values)[..., 0].mean()  # any loss of the degrees
+loss.backward()
+optimizer.step()
+```
+
+Every word learns where its core starts and ends. The cores keep their order,
+and the degrees of a pixel still sum to 1. A partition that several families
+share, as saturation in COLIBRI, learns once.
+
+## Palettes and neighbours
+
+`palette(degrees, weights)` and `cooccurrence(degrees, distance)` are those of
+`emoge.color` for a batch of degree maps, `(..., height, width, colors)`, and
+gradients pass through them:
+
+```python
+print(tuple(nn.palette(degrees).shape), tuple(nn.cooccurrence(degrees).shape))
+# (2, 86) (2, 86, 86)
+```
+
+## Back to a color model
+
+`to_model()` gives the model with its cores as learned, for everything
+`emoge.color` does with a model: palettes, plots, lookup tables.
+
+```python
+learned = layer.to_model()
+print(learned.label([255, 0, 0]))  # red/high/dark
+```
