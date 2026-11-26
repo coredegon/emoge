@@ -36,10 +36,10 @@ for i in np.argsort(-degrees)[:2]:
 
 ![The 86 colors of COLIBRI](img/colibri_swatches.png)
 
-For many images, `lookup_table(COLIBRI, "colibri.npy")` classifies every 8-bit
-pixel once and keeps the 16 MB table in that file; then `table[red, green, blue]`
-classifies a whole image at once. `degree=True` keeps the degree of each color
-too.
+For many images, `lookup_table(COLIBRI, "colibri.npz")` classifies every 8-bit
+pixel once and keeps the table in that file, 0.6 MB compressed; then
+`table[red, green, blue]` classifies a whole image at once. `degree=True` keeps
+the degree of each color too, in steps of 1/255.
 
 ## How a model works
 
