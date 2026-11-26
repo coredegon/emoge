@@ -73,3 +73,18 @@ print(parts.edges[0, 1, 2:].round(2).tolist())  # [0.0, 0.0, 0.98, 0.02]
 ```
 
 The red cell and the blue one beside it are triadic.
+
+## Plots
+
+`plot_graph(graph)` draws a graph. A graph of regions stands where its regions
+are, over `image` if given; a graph of colors stands round a circle, every color
+in its place, its edges bowing to the middle. Nodes are painted in their colors
+and as large as their share or area, edges as thick and as strong as their first
+feature, or the one `edges=` names. Colors smaller than `least` of the largest,
+1% unless told, are left out.
+
+```python
+ax = graphs.plot_graph(parts, image=flag)
+```
+
+![The graphs of a photo: its regions over it, its colors round a circle](img/graphs.png)
